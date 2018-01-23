@@ -26,3 +26,16 @@
 *.exe
 *.out
 *.app
+### https://raw.github.com/github/gitignore/22a5eb3da72c0a224a179033e92722bdbf5a05ad/CMake.gitignore
+
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+
