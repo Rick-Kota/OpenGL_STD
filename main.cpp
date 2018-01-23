@@ -1,12 +1,17 @@
+/*
+ * B1 Robo Kick課題プログラム
+ * Original Author 代田 康貴
+ */
+
 #include <iostream>
 #include <OpenGL/OpenGL.h>
 #include <GLUT/GLUT.h>
 #include <cmath>
 
-#define PI 3.1415926
+#define PI tan(1)*4
 #define G 9.8
 
-float t = 0, dt = 0.002;
+float t = 0, dt = 0.1;
 int fg = 0;
 
 typedef struct {
@@ -14,11 +19,11 @@ typedef struct {
     GLfloat e;
     GLfloat r;
     GLfloat ang;
-    GLfloat x;
-    GLfloat y;
+    double x;
+    double y;
     GLfloat dang;
-    GLfloat dx;
-    GLfloat dy;
+    double dx;
+    double dy;
     GLfloat ddx;
     GLfloat ddy;
 } ball_cdt;
@@ -33,9 +38,9 @@ typedef struct {
 leg_cdt leg1 = {90, 80, 0, 60};    //脚の初期角度,角速度,?,脚の長さ
 ball_cdt b1[10];
 
-float mx, my;
+double mx, my;
 
-void display(void) {
+void display() {
     int i;
     float theta = 0;
 
@@ -46,7 +51,7 @@ void display(void) {
 
     glColor3f(1.0, 1.0, 0.0);
 
-    glTranslatef(-50 + b1[0].x, b1[0].y, 0.0);
+    glTranslatef(static_cast<GLfloat>(-50 + b1[0].x), static_cast<GLfloat>(b1[0].y), 0.0);
 
     glRotatef(b1[0].ang, 0.0, 0.0, 1.0);
 
@@ -64,7 +69,8 @@ void display(void) {
 
     glPushMatrix();
     glColor3f(0.0, 1.0, 0.0);
-    glTranslatef(-50 - leg1.length / sqrt(2) + 2, leg1.length - (leg1.length - leg1.length / sqrt(2)), 0);
+    glTranslatef(static_cast<GLfloat>(-50 - leg1.length / sqrt(2) + 2),
+                 static_cast<GLfloat>(leg1.length - (leg1.length - leg1.length / sqrt(2))), 0);
     glRotatef(leg1.ang, 0.0, 0.0, 1.0);
     glBegin(GL_LINE_LOOP);
     glVertex3f(7, 0, 0);
@@ -94,7 +100,7 @@ void display(void) {
     glutSwapBuffers();
 }
 
-void simu(void) {
+void simu() {
     t = t + dt;
     mx = -50 - leg1.length / sqrt(2) - leg1.length * sin(leg1.ang * PI / 360) + 2;
     my = leg1.length / sqrt(2) + leg1.length * cos(leg1.ang * PI / 360);
@@ -121,7 +127,7 @@ void simu(void) {
             b1[0].dy = b1[0].dy + b1[0].ddy * dt;
 
             if (b1[0].y > 0) b1[0].ang += 0.2;
-            if (b1[0].ang > 360.0) b1[0].ang = b1[0].ang - 360.0;
+            if (b1[0].ang > 360.0) b1[0].ang = static_cast<GLfloat>(b1[0].ang - 360.0);
         } else {
             b1[0].dy = -b1[0].e * b1[0].dy;
 
@@ -146,20 +152,19 @@ void simu(void) {
     glutPostRedisplay();
 }
 
-void init(void) {
-    int i;
+void init() {
 
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glShadeModel(GL_FLAT);
 
-    for (int i = 0; i < 10; i++) {
-        b1[i].x = 0;
-        b1[i].y = 0;
-        b1[i].dang = 0;
-        b1[i].dx = 0;
-        b1[i].dy = 0;
-        b1[i].ddx = 0;
-        b1[i].ddy = -G;
+    for (auto &i : b1) {
+        i.x = 0;
+        i.y = 0;
+        i.dang = 0;
+        i.dx = 0;
+        i.dy = 0;
+        i.ddx = 0;
+        i.ddy = static_cast<GLfloat>(-G);
     }
 
     b1[0].mass = 5;
@@ -215,3 +220,4 @@ int main(int argc, char *argv[]) {
     glutMainLoop();
     return 0;
 }
+
