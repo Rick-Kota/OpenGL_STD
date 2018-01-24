@@ -57,6 +57,7 @@ ball_cdt ball[10];
 double mx, my;
 
 void circle2D(double radius, int x, int y) {
+    // 円の描画を行う関数です
     for (auto th1 = 0; th1 <= 360; th1 += 1) {
         auto th2 = th1 + 10.0;
         auto th1_rad = th1 / 180.0 * Pai;
@@ -84,6 +85,7 @@ void circle2D(double radius, int x, int y) {
 }
 
 void Write_leg() {
+    // 脚の描画を行う関数です
     glBegin(GL_LINE_LOOP);
     glVertex3f(7, 0, 0);
     glVertex3f(7, leg1.length, 0);
@@ -106,7 +108,6 @@ void Wall() {
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);                       // OpenGLのバッファをクリア
-
     //行列スタックへのPushとPopに使う
     glPushMatrix();
     glColor3f(1.0, 1.0, 0.0);                           // 円の色を指定
@@ -131,7 +132,7 @@ void display() {
     glutSwapBuffers();                                  // Swap(画面の更新)作業の実行
 }
 
-void simu() {
+void Operation() {
     // 結果時間 "t" を常にカウントアップ
     t = t + dt;
     // 足先位置の計算
@@ -228,6 +229,7 @@ void init() {
 }
 
 void reshape(int w, int h) {
+    // Windowサイズが変更された時それに合わせて再描画を行う
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -238,36 +240,41 @@ void reshape(int w, int h) {
 
 void keyboard(unsigned char key, int x, int y) {
     if (key == '\x1b') exit(0);
-
 }
 
 void mouse_interrupt(int button, int state, int x, int y) {
+    // 左クリックした時に
     if (button == GLUT_LEFT_BUTTON) {
+        // 移動開始フラグをON
         FLAG_MOVING = GL_TRUE;
-        bgnx = x; // ボタンを押した時の座標で初期化
-        bgny = y; // ボタンを押した時の座標で初期化
+        bgnx = x; // 右クリックを押した時の座標で初期化
+        bgny = y; // 右クリックを押した時の座標で初期化
     }
+    // 右クリックした時に
     if (button == GLUT_RIGHT_BUTTON) {
+        // 特にすることが無いので動きを止めています
         FLAG_MOVING = GL_FALSE;
     }
 }
 
 void MyIdle(int i){
-    simu();
-    glutTimerFunc(static_cast<unsigned int>(REDRAW_INTERVAL), MyIdle, 1); // 次の割り込み設定
+    Operation();                                                                // 割り込み時に関数Operationを実行します
+    // タイマ割り込み関数
+    glutTimerFunc(static_cast<unsigned int>(REDRAW_INTERVAL), MyIdle, 1);       // 次の割り込み設定
 }
 
 int main(int argc, char *argv[]) {
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInit(&argc, argv);                          // GLUTの初期化
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);    // 描画モードの指定
     glutCreateWindow("Hellow Robo Kick!!");         // Window の作成
     glutInitWindowSize(400, 400);                   // Window サイズの指定
     glutInitWindowPosition(100, 100);               // Window サイズの指定
-    init();
-    glutReshapeFunc(reshape);
-    glutKeyboardFunc(keyboard);
-    glutMouseFunc(mouse_interrupt);
-    glutDisplayFunc(display);
+    init();                                         // 初期化の実行
+    glutReshapeFunc(reshape);                       // Windowサイズの変更が行われた際のイベントハンドラ
+    glutKeyboardFunc(keyboard);                     // キーボードイベントハンドラ
+    glutMouseFunc(mouse_interrupt);                 // マウスイベントハンドラ
+    glutDisplayFunc(display);                       // 描画の実行
+    // タイマー割り込み　指定時間おきにMyIdleを実行します
     glutTimerFunc(static_cast<unsigned int>(REDRAW_INTERVAL), MyIdle, 1);
     glutMainLoop();
     return 0;
