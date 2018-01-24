@@ -168,7 +168,7 @@ void simu() {
         }
 
         // X方向の移動を定義
-        ball[0].x = ball[0].x + ball[0].dx * dt + ball[0].ddx * dt * dt / 2;
+        ball[0].x += static_cast<GLfloat>(ball[0].dx * dt + ball[0].ddx * dt * dt / 2);
         // X方向の移動における減衰の計算 (Disable)
         ball[0].dx = ball[0].dx + ball[0].ddx * dt;
 
@@ -233,6 +233,7 @@ void mouse(int button, int state, int x, int y) {
 
 void keyboard(unsigned char key, int x, int y) {
     if (key == '\x1b') exit(0);
+
 }
 
 int main(int argc, char *argv[]) {
