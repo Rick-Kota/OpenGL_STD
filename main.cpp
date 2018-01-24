@@ -14,14 +14,26 @@
 #define G 9.8
 // ボールの初期位置の定義
 #define Ball_Point -50
+// インパクト時のボールの角初速度
+#define Ball_init_rotate  5.4
 
 float t = 0, dt = 0.1;
-int fg = 0;
+
+// マウスのクリック位置読み取り用グローバル変数
+int bgnx, bgny;
+
+// 描画感覚の指定
+GLint REDRAW_INTERVAL = 10;
+// マウスクリックによる開始確認フラグ
+GLboolean FLAG_MOVING = GL_FALSE;
+// ボールキックフラグ
+GLboolean IMPACT_FLG = GL_FALSE;
 
 typedef struct {
     GLfloat mass;
     GLfloat e;
     GLfloat r;
+    GLfloat dir;
     GLfloat ang;
     GLfloat x;
     GLfloat y;
@@ -61,6 +73,12 @@ void circle2D(double radius, int x, int y) {
         glVertex2f(static_cast<GLfloat>(x2 + x), static_cast<GLfloat>(y2 + y));
         glEnd();
     }
+    glBegin(GL_LINE_STRIP);
+    glColor3f(0.0, 0.0, 0.0);
+    glVertex2f(x + radius / 2, y);
+    glVertex2f(x - radius / 2, y);
+
+    glEnd();
 
 
 }
@@ -101,7 +119,7 @@ void display() {
     glColor3f(0.0, 1.0, 0.0);                           // 足の色を指定
     glTranslatef(static_cast<GLfloat>(Ball_Point - leg1.length / sqrt(2) + 2),
                  static_cast<GLfloat>(leg1.length - (leg1.length - leg1.length / sqrt(2))), 0);
-    glRotatef(leg1.ang, 0.0, 0.0, 1.0);
+    glRotatef(leg1.ang, 0.0, 0.0, 1.0);                 // 脚を描画した座標系の回転
     Write_leg();                                        // 脚の描画
     glPopMatrix();
 
@@ -119,7 +137,7 @@ void simu() {
     // 足先位置の計算
     mx = Ball_Point - leg1.length / sqrt(2) - leg1.length * sin(leg1.ang * PI / 360) + 2;
     my = leg1.length / sqrt(2) + leg1.length * cos(leg1.ang * PI / 360);
-    if (fg == 0) {
+    if (FLAG_MOVING) {
         // 脚の回転運動の定義
         leg1.ang = (leg1.ang + leg1.dang * dt) + (leg1.ddang * dt * dt / 2);
         // 脚の回転運動の減衰の計算 (Disable)
@@ -132,12 +150,12 @@ void simu() {
             ball[0].dy = leg1.length * 2 * PI * leg1.dang / (360 * ball[0].mass * sqrt(2));
             printf("%f\n", ball[0].dx);
             // 接触フラグの立ち上げ
-            fg = 1;
+            IMPACT_FLG = GL_TRUE;
         }
     }
 
     // フラグが立ち上がった場合ボールが蹴られたとしボールを動かす
-    if (fg == 1) {
+    if (IMPACT_FLG) {
         // 脚の動きを停止する
         leg1.dang = 0;
         leg1.ddang = 0;
@@ -145,11 +163,11 @@ void simu() {
         if (ball[0].y > -0.001) {   // ボール座標の中心が定数より大きい場合　= 床への当たり判定
             // ボールの放物線運動を定義
             ball[0].y += (ball[0].dy * dt) + (ball[0].ddy * dt * dt / 2);
-            // ボールの上下運動における減衰の計算(Disable)
+            // ボールの上下運動における重力加速度による速度変化の計算
             ball[0].dy += ball[0].ddy * dt;
 
             // ボールが空中にある時回転させる
-            if (ball[0].y > 0) ball[0].ang += 0.2;
+            if (ball[0].y > 0) ball[0].ang -= Ball_init_rotate * ball[0].dir;
             // ボールの現在角度が360度を超えた時0度に戻す
             if (ball[0].ang > 360.0) ball[0].ang = static_cast<GLfloat>(ball[0].ang - 360.0);
         } else { // ボールが完全に地面に接触した場合
@@ -178,6 +196,8 @@ void simu() {
             ball[0].dx = -ball[0].e * ball[0].dx;
             // 反発による加速度の減衰を計算
             ball[0].ddx = -ball[0].e * ball[0].ddx;
+            // 反発による回転方向の反転
+            ball[0].dir *= -1;
         }
     }
     glutPostRedisplay();
@@ -192,6 +212,7 @@ void init() {
     for (auto &i : ball) {
         i.x = 0;
         i.y = 0;
+        i.dir = 1;
         i.dang = 0;
         i.dx = 0;
         i.dy = 0;
@@ -215,25 +236,25 @@ void reshape(int w, int h) {
     glLoadIdentity();
 }
 
-void mouse(int button, int state, int x, int y) {
-    switch (button) {
-        case GLUT_LEFT_BUTTON:
-            if (state == GLUT_DOWN)
-                glutIdleFunc(simu);
-            break;
-        case GLUT_RIGHT_BUTTON:
-            if (state == GLUT_DOWN) {
-                glutIdleFunc(nullptr);
-            }
-            break;
-        default:
-            break;
-    }
-}
-
 void keyboard(unsigned char key, int x, int y) {
     if (key == '\x1b') exit(0);
 
+}
+
+void mouse_interrupt(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON) {
+        FLAG_MOVING = GL_TRUE;
+        bgnx = x; // ボタンを押した時の座標で初期化
+        bgny = y; // ボタンを押した時の座標で初期化
+    }
+    if (button == GLUT_RIGHT_BUTTON) {
+        FLAG_MOVING = GL_FALSE;
+    }
+}
+
+void MyIdle(int i){
+    simu();
+    glutTimerFunc(static_cast<unsigned int>(REDRAW_INTERVAL), MyIdle, 1); // 次の割り込み設定
 }
 
 int main(int argc, char *argv[]) {
@@ -245,9 +266,9 @@ int main(int argc, char *argv[]) {
     init();
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
-    glutMouseFunc(mouse);
+    glutMouseFunc(mouse_interrupt);
     glutDisplayFunc(display);
-
+    glutTimerFunc(static_cast<unsigned int>(REDRAW_INTERVAL), MyIdle, 1);
     glutMainLoop();
     return 0;
 }
