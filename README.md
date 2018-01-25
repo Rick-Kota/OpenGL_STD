@@ -1,7 +1,7 @@
 # what is it
 
 This is solve to Homewwork of OpenGL in Advanced Robotices Subject in CIT.
-It's Authored by "Yasutaka Shirota" and Modified by "Kotaro Ozawa".
+It's Authored by " Shirota" and Modified by "Kotaro Ozawa".
 
 # Environment
 OpenGL
